@@ -85,6 +85,13 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref 'AWS::StackName', 'public_route_table' ]]
+  PublicDefaultRoute:
+    Type: "AWS::EC2::Route"
+    DependsOn: Igw
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Igw
   PrivateSubnet0RouteAssocation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
@@ -115,7 +122,6 @@ Resources:
   AllInstanceSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'AllInstanceSG' ]]
       GroupDescription:  SG For all Instances
       VpcId: !Ref Vpc
       SecurityGroupEgress:
@@ -133,7 +139,6 @@ Resources:
   GMServerSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'GMServerSG' ]]
       GroupDescription: SG for Garrys Mod
       VpcId: !Ref Vpc
       SecurityGroupIngress:
@@ -156,7 +161,6 @@ Resources:
   JumphostSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'JumphostSG' ]]
       GroupDescription: SG for Jumphost
       VpcId: !Ref Vpc
       SecurityGroupIngress:
@@ -184,11 +188,38 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref 'AWS::StackName', 'JumphostSG' ]]
+  GsSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SG for Gaming Server
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref JumphostSG
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: icmp
+          FromPort: 8
+          ToPort: -1
+          CidrIp: !GetAtt 'Vpc.CidrBlock'
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'AWS::StackName', 'GsSG' ]]
   JumphostInstance:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: "ami-0dedf6a6502877301"
       KeyName: "pvtcj-us-east-1"
+      InstanceType: t3a.nano
       SecurityGroupIds:
         - !Ref JumphostSG
         - !Ref AllInstanceSG
@@ -196,7 +227,7 @@ Resources:
       Tags:
         - Key: Name
           Value: "jh.pvtcj.co"
-  jumphostDNS:
+  JumphostDNS:
     Type: "AWS::Route53::RecordSet"
     Properties:
       HostedZoneId: Z2PQMCYWDPHGRX
@@ -205,3 +236,25 @@ Resources:
       Type: A
       ResourceRecords:
       - !GetAtt JumphostInstance.PublicIp
+  GsInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: "ami-0dedf6a6502877301"
+      KeyName: "pvtcj-us-east-1"
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref GsSG
+        - !Ref AllInstanceSG
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: "gs.pvtcj.co"
+  GsDNS:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      HostedZoneId: Z2PQMCYWDPHGRX
+      Name: gs.pvtcj.co
+      TTL: '30'
+      Type: A
+      ResourceRecords:
+      - !GetAtt GsInstance.PublicIp
