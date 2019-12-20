@@ -6,8 +6,8 @@ Parameters:
     Default: 172.16.0.0/20
     Description: VPC CIDR Block
   VpcAZs:
-    Type: CommandDelimitedList
-    Default: us-east-1a,us-east-1b
+    Type: CommaDelimitedList
+    Default: "us-east-1a, us-east-1b"
     Description: AZs (comma delimited...must be exactly two)
 Resources:
   Vpc:
@@ -36,7 +36,7 @@ Resources:
   PublicSubnet0:
     Type: 'AWS::EC2::Subnet'
     Properties:
-      AvailabiityZone: !Select [ 0, !Ref 'VpcAZs' ]
+      AvailabiityZone: !Select [ 0, !Ref VpcAZs ]
       CidrBlock: !Select [ 0, !Cidr [ !GetAtt Vpc.CidrBlock, 16, 8 ]]
       MapPublicIpOnLaunch: true
       VpcId:
@@ -47,7 +47,7 @@ Resources:
   PublicSubnet1:
     Type: 'AWS::EC2::Subnet'
     Properties:
-      AvailabiityZone: !Select [ 1, !Ref 'VpcAZs' ]
+      AvailabilityZone: !Select [ 1, !Ref 'VpcAZs' ]
       CidrBlock: !Select [ 1, !Cidr [ !GetAtt 'Vpc.CidrBlock', 16, 8 ]]
       MapPublicIpOnLaunch: true
       VpcId:
@@ -58,9 +58,9 @@ Resources:
   PrivateSubnet0:
     Type: 'AWS::EC2::Subnet'
     Properties:
-      AvailabiityZone: !Select [ 0, !Ref 'VpcAZs' ]
+      AvailabilityZone: !Select [ 0, !Ref 'VpcAZs' ]
       CidrBlock: !Select [ 8, !Cidr [ !GetAtt 'Vpc.CidrBlock', 16, 8 ]]
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       VpcId:
         Ref: Vpc
       Tags:
@@ -69,9 +69,9 @@ Resources:
   PrivateSubnet1:
     Type: 'AWS::EC2::Subnet'
     Properties:
-      AvailabiityZone: !Select [ 1, !Ref 'VpcAZs' ]
+      AvailabilityZone: !Select [ 1, !Ref 'VpcAZs' ]
       CidrBlock: !Select [ 9, !Cidr [ !GetAtt 'Vpc.CidrBlock', 16, 8 ]]
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       VpcId:
         Ref: Vpc
       Tags:
