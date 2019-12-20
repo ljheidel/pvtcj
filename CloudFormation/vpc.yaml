@@ -29,18 +29,15 @@ Resources:
   AttachGateway:
     Type: 'AWS::EC2::VPCGatewayAttachment'
     Properties:
-      VpcId:
-        Ref: Vpc
-      InternetGatewayId:
-        Ref: Igw
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref Igw
   PublicSubnet0:
     Type: 'AWS::EC2::Subnet'
     Properties:
-      AvailabiityZone: !Select [ 0, !Ref VpcAZs ]
+      AvailabilityZone: !Select [ 0, !Ref VpcAZs ]
       CidrBlock: !Select [ 0, !Cidr [ !GetAtt Vpc.CidrBlock, 16, 8 ]]
       MapPublicIpOnLaunch: true
-      VpcId:
-        Ref: Vpc
+      VpcId: !Ref Vpc
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref 'AWS::StackName', !Select [ 0, !Ref 'VpcAZs' ],  'public_subnet' ]]
@@ -50,8 +47,7 @@ Resources:
       AvailabilityZone: !Select [ 1, !Ref 'VpcAZs' ]
       CidrBlock: !Select [ 1, !Cidr [ !GetAtt 'Vpc.CidrBlock', 16, 8 ]]
       MapPublicIpOnLaunch: true
-      VpcId:
-        Ref: Vpc
+      VpcId: !Ref Vpc
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref 'AWS::StackName', !Select [ 1, !Ref 'VpcAZs' ],  'public_subnet' ]]
@@ -61,8 +57,7 @@ Resources:
       AvailabilityZone: !Select [ 0, !Ref 'VpcAZs' ]
       CidrBlock: !Select [ 8, !Cidr [ !GetAtt 'Vpc.CidrBlock', 16, 8 ]]
       MapPublicIpOnLaunch: false
-      VpcId:
-        Ref: Vpc
+      VpcId: !Ref Vpc
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref 'AWS::StackName', !Select [ 0, !Ref 'VpcAZs' ],  'private_subnet' ]]
@@ -72,52 +67,135 @@ Resources:
       AvailabilityZone: !Select [ 1, !Ref 'VpcAZs' ]
       CidrBlock: !Select [ 9, !Cidr [ !GetAtt 'Vpc.CidrBlock', 16, 8 ]]
       MapPublicIpOnLaunch: false
-      VpcId:
-        Ref: Vpc
+      VpcId: !Ref Vpc
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref 'AWS::StackName', !Select [ 1, !Ref 'VpcAZs' ],  'private_subnet' ]]
   PrivateRouteTable:
     Type: 'AWS::EC2::RouteTable'
     Properties:
-      VpcId:
-        Ref: Vpc
+      VpcId: !Ref Vpc
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref 'AWS::StackName', 'private_route_table' ]]
   PublicRouteTable:
     Type: 'AWS::EC2::RouteTable'
     Properties:
-      VpcId:
-        Ref: Vpc
+      VpcId: !Ref Vpc
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref 'AWS::StackName', 'public_route_table' ]]
   PrivateSubnet0RouteAssocation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
-      RouteTableId: 
-        Ref: PrivateRouteTable
-      SubnetId:
-        Ref: PrivateSubnet0
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet0
   PrivateSubnet1RouteAssocation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
-      RouteTableId: 
-        Ref: PrivateRouteTable
-      SubnetId:
-        Ref: PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1
   PublicSubnet0RouteAssocation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
-      RouteTableId: 
-        Ref: PublicRouteTable
-      SubnetId:
-        Ref: PublicSubnet0
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet0
   PublicSubnet1RouteAssocation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
-      RouteTableId: 
-        Ref: PublicRouteTable
-      SubnetId:
-        Ref: PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+  Nacl:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'AWS::StackName', 'Nacl' ]]
+  AllInstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'AllInstanceSG' ]] 
+      GroupDescription:  SG For all Instances
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - IpProtocol: icmp
+          FromPort: 8
+          ToPort: -1
+          CidrIp: !GetAtt 'Vpc.CidrBlock'
+        - IpProtocol: icmp
+          FromPort: 0
+          ToPort: -1
+          CidrIp: !GetAtt 'Vpc.CidrBlock'
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'AWS::StackName', 'AllInstanceSG' ]]
+  GMServerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'GMServerSG' ]] 
+      GroupDescription: SG for Garrys Mod
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !GetAtt 'Vpc.CidrBlock'
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'AWS::StackName', 'GMServerSG' ]]
+  JumphostSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'JumphostSG' ]] 
+      GroupDescription: SG for Jumphost
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 96.247.202.167/32
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !GetAtt 'Vpc.CidrBlock'
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: icmp
+          FromPort: 8
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'AWS::StackName', 'JumphostSG' ]]
+  JumphostInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: "ami-0dedf6a6502877301"
+      KeyName: "pvtcj-us-east-1"
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SecurityGroupIds: 
+          - Ref: AllInstanceSG
+          - Ref: JumphostSG
+          SubnetId: !Ref PublicSubnet0
+      Tags:
+        - Key: Name
+          Value: "jh.pvtcj.s2i4.us"
