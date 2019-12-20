@@ -115,7 +115,7 @@ Resources:
   AllInstanceSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'AllInstanceSG' ]] 
+      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'AllInstanceSG' ]]
       GroupDescription:  SG For all Instances
       VpcId: !Ref Vpc
       SecurityGroupEgress:
@@ -133,7 +133,7 @@ Resources:
   GMServerSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'GMServerSG' ]] 
+      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'GMServerSG' ]]
       GroupDescription: SG for Garrys Mod
       VpcId: !Ref Vpc
       SecurityGroupIngress:
@@ -156,7 +156,7 @@ Resources:
   JumphostSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'JumphostSG' ]] 
+      GroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'JumphostSG' ]]
       GroupDescription: SG for Jumphost
       VpcId: !Ref Vpc
       SecurityGroupIngress:
@@ -189,13 +189,19 @@ Resources:
     Properties:
       ImageId: "ami-0dedf6a6502877301"
       KeyName: "pvtcj-us-east-1"
-      NetworkInterfaces:
-        - AssociatePublicIpAddress: "true"
-          DeviceIndex: "0"
-          SecurityGroupIds: 
-          - Ref: AllInstanceSG
-          - Ref: JumphostSG
-          SubnetId: !Ref PublicSubnet0
+      SecurityGroupIds:
+        - !Ref JumphostSG
+        - !Ref AllInstanceSG
+      SubnetId: !Ref PublicSubnet0
       Tags:
         - Key: Name
-          Value: "jh.pvtcj.s2i4.us"
+          Value: "jh.pvtcj.co"
+  jumphostDNS:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      HostedZoneId: Z2PQMCYWDPHGRX
+      Name: jh.pvtcj.co
+      TTL: '30'
+      Type: A
+      ResourceRecords:
+      - !GetAtt JumphostInstance.PublicIp

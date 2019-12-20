@@ -1,0 +1,8 @@
+AWSTemplateFormatVersion: 2010-09-09
+pvtcj_s2i4_us:
+  Type: "AWS::Route53::HostedZone"
+  Properties:
+    Name: 'pvtcj.co'
+    HostedZoneTags:
+        - Key: Name
+          Value: 'pvtcj.co'
